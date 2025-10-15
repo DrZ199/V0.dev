@@ -1,5 +1,5 @@
 'use client';
-import React, {useContext, useEffect, useState} from "react";
+import React, {useContext, useEffect, useState, useCallback} from "react";
 import {
     SandpackProvider,
     SandpackLayout,
@@ -29,7 +29,7 @@ const CodeView = () => {
       throw new Error('MessageContext is not defined');
     }
     
-    const { messages, setMessages, selectedModel, setSelectedModel } = messageContext;
+    const { messages, selectedModel, setSelectedModel } = messageContext;
     const [loading,setLoading]=useState(false)
     const [showModelSelector, setShowModelSelector] = useState(false);
     const UpdateFiles=useMutation(api.workspace.UpdateFiles)
@@ -37,9 +37,9 @@ const CodeView = () => {
 
     useEffect(()=>{
       id&&GetFiles()
-    },[id])
+    },[id, GetFiles])
   
-    const GetFiles=async()=>{
+    const GetFiles=useCallback(async()=>{
       setLoading(true)
       const result= await convex.query(api.workspace.GetUserWorkSpace,{
         workspaceId:id as Id<"workspaces">
@@ -47,17 +47,9 @@ const CodeView = () => {
       const mergeFiles= {...result?.fileData}
       setFiles(mergeFiles)
       setLoading(false)
-    }
+    },[id, convex])
   
-    useEffect(()=>{
-      if(messages?.length > 0){
-         const role= messages[messages.length-1].role;
-          if(role === 'user'){
-            GenerateAiCode()
-          }
-      }
-    },[messages])
-    const GenerateAiCode=async()=>{
+    const GenerateAiCode=useCallback(async()=>{
       setActiveTab('code')
       setLoading(true)
       const PROMPT= JSON.stringify(messages)+" "+Prompt.CODE_GEN_PROMPT
@@ -73,7 +65,7 @@ const CodeView = () => {
         fileData:aiResponse?.files
       })
       setLoading(false)
-    }
+    }, [messages, selectedModel, Files, UpdateFiles, id])
   
     return (
       <div className='relative'>

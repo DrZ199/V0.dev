@@ -2,15 +2,14 @@
 
 import React, { useContext, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { useConvex, useQuery } from 'convex/react';
+import { useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { MessageContext } from '@/providers/MessageContext';
-import { Download, FileText, FolderOpen } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
 
 const ExportButton = () => {
   const { id } = useParams();
-  const convex = useConvex();
   const messageContext = useContext(MessageContext);
   const [isExporting, setIsExporting] = useState(false);
 
@@ -18,10 +17,10 @@ const ExportButton = () => {
     workspaceId: id as Id<'workspaces'>,
   });
 
-  const generateProjectStructure = (files: any) => {
+  const generateProjectStructure = (files: Record<string, { code: string }>) => {
     let structure = '';
     
-    const processFiles = (fileObj: any, path = '') => {
+    const processFiles = (fileObj: Record<string, { code: string }>, path = '') => {
       Object.keys(fileObj).forEach((key) => {
         if (key === 'code') return;
         
@@ -41,11 +40,11 @@ const ExportButton = () => {
     return structure;
   };
 
-  const createZipFile = async (files: any) => {
+  const createZipFile = async (files: Record<string, { code: string }>) => {
     const JSZip = (await import('jszip')).default;
     const zip = new JSZip();
     
-    const processFilesForZip = (fileObj: any, path = '') => {
+    const processFilesForZip = (fileObj: Record<string, { code: string }>, path = '') => {
       Object.keys(fileObj).forEach((key) => {
         if (key === 'code') return;
         
@@ -95,7 +94,7 @@ const ExportButton = () => {
     const structure = generateProjectStructure(workspaceData.fileData);
     const content = `Project Structure:\n\n${structure}\n\nFiles:\n\n`;
     
-    const processFilesForText = (fileObj: any, path = '') => {
+    const processFilesForText = (fileObj: Record<string, { code: string }>, path = '') => {
       Object.keys(fileObj).forEach((key) => {
         if (key === 'code') return;
         
