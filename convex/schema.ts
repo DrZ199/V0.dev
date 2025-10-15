@@ -9,8 +9,15 @@ export default defineSchema({
     uid: v.string()
   }),
   workspaces: defineTable({
-    message: v.any(),
+    message: v.array(v.object({
+      role: v.string(),
+      content: v.string(),
+      timestamp: v.number()
+    })),
     fileData: v.optional(v.any()),
-    user: v.id("users")
+    user: v.id("users"),
+    title: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number()
   })
 })

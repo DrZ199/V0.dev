@@ -4,7 +4,7 @@ import { UserDetailContext } from '@/context/UserDetailContext'
 import Image from 'next/image'
 import React, { useContext, useState } from 'react'
 import LoginDialog from './LoginDialog';
-import { LogOut } from 'lucide-react'
+import { LogOut, LayoutDashboard } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -57,6 +57,12 @@ const Header = () => {
             />
             {showDropdown && (
               <div className='absolute right-0 mt-2 w-36 bg-white rounded-md shadow-lg py-1 z-50'>
+                <Link href="/dashboard">
+                  <button className='flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'>
+                    <LayoutDashboard className='w-4 h-4 mr-2' />
+                    <p>Dashboard</p>
+                  </button>
+                </Link>
                 <button
                   onClick={handleLogout}
                   className='flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100'
