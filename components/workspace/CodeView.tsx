@@ -16,16 +16,22 @@ import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { useParams } from 'next/navigation';
 import Prompt from "@/data/Prompt";
-import { Loader2Icon } from 'lucide-react';
+import { Loader2Icon, Settings } from 'lucide-react';
+import ModelSelector from "@/components/ModelSelector";
 
 const CodeView = () => {
     const {id}=useParams()
     const [activeTab,setActiveTab]=useState('code')
     const [Files,setFiles]=useState(LOOKUP.DEFAULT_FILE)
     const messageContext = useContext(MessageContext)
-    const messages = messageContext?.messages || []
-    const setMessages = messageContext?.setMessages || (() => {})
+    
+    if (!messageContext) {
+      throw new Error('MessageContext is not defined');
+    }
+    
+    const { messages, setMessages, selectedModel, setSelectedModel } = messageContext;
     const [loading,setLoading]=useState(false)
+    const [showModelSelector, setShowModelSelector] = useState(false);
     const UpdateFiles=useMutation(api.workspace.UpdateFiles)
     const convex= useConvex();
 
@@ -55,8 +61,9 @@ const CodeView = () => {
       setActiveTab('code')
       setLoading(true)
       const PROMPT= JSON.stringify(messages)+" "+Prompt.CODE_GEN_PROMPT
-      const result= await axios.post('/api/ai-code',{
-        prompt: PROMPT
+      const result= await axios.post('/api/openrouter-code',{
+        prompt: PROMPT,
+        modelId: selectedModel
       })
       const aiResponse=result.data
       const mergeFiles= {...Files,...aiResponse?.files}
@@ -70,6 +77,28 @@ const CodeView = () => {
   
     return (
       <div className='relative'>
+        {/* Model Selector */}
+        <div className="flex justify-end mb-2">
+          <div className="relative">
+            <button
+              onClick={() => setShowModelSelector(!showModelSelector)}
+              className="flex items-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm transition-colors"
+            >
+              <Settings className="h-4 w-4" />
+              Model: {selectedModel.split('/')[1]}
+            </button>
+            {showModelSelector && (
+              <div className="absolute right-0 top-full mt-2 z-50">
+                <ModelSelector 
+                  selectedModel={selectedModel} 
+                  onModelChange={setSelectedModel}
+                  purpose="code"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
         <div className='bg-[#181818] w-full p-2 border -mt-10'>
           <div className='flex gap-3 items-center justify-center flex-wrap shrink-0 bg-black p-1 w-[140px] rounded-full'>
             <h2 className={`text-sm cursor-pointer ${activeTab=='code'&& 'text-blue-500 bg-blue-500 bg-opacity-25  p-1 px-2 rounded-full  '}`}

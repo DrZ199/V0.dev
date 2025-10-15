@@ -3,15 +3,17 @@
 import { MessageContext } from "@/providers/MessageContext";
 import { UserDetailContext } from "@/context/UserDetailContext";
 import { LOOKUP } from "@/data/Lookup";
-import { ArrowRight, Link } from "lucide-react";
+import { ArrowRight, Link, Settings } from "lucide-react";
 import React, { useState, useContext } from "react";
 import LoginDialog from "./LoginDialog";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useRouter } from "next/navigation";
+import ModelSelector from "@/components/ModelSelector";
 
 export const Hero = () => {
   const [userInput, setUserInput] = useState<string>('');
+  const [showModelSelector, setShowModelSelector] = useState(false);
   const messageContext = useContext(MessageContext);
   const userDetailContext = useContext(UserDetailContext);
 
@@ -19,7 +21,7 @@ export const Hero = () => {
     throw new Error('MessageContext or UserDetailContext is not defined');
   }
 
-  const { messages, setMessages } = messageContext;
+  const { messages, setMessages, selectedModel, setSelectedModel } = messageContext;
   const { userDetail } = userDetailContext;
   const [openDialog, setOpenDialog] = useState(false);
   const Createworkspace = useMutation(api.workspace.CreateWorkSpace);
@@ -36,6 +38,7 @@ export const Hero = () => {
     const message = {
       role: 'user',
       content: input,
+      timestamp: Date.now()
     }
     setMessages([...messages, message]);
     try {
@@ -46,6 +49,7 @@ export const Hero = () => {
       const workspaceId = await Createworkspace({
         user: getUserData._id,
         message: [message],
+        title: input.substring(0, 50) + (input.length > 50 ? '...' : input)
       });
       if (workspaceId) {
         router.push('/workspace/' + workspaceId);
@@ -59,6 +63,28 @@ export const Hero = () => {
     <div className="flex flex-col items-center justify-center mt-36 xl:mt-45 gap-2">
       <h2 className="font-bold text-4xl">{LOOKUP.HERO_HEADING}</h2>
       <p className="text-gray-400 font-medium">{LOOKUP.HERO_DESC}</p>
+
+      {/* Model Selector */}
+      <div className="mb-4">
+        <div className="relative">
+          <button
+            onClick={() => setShowModelSelector(!showModelSelector)}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
+          >
+            <Settings className="h-4 w-4" />
+            Model: {selectedModel.split('/')[1]}
+          </button>
+          {showModelSelector && (
+            <div className="absolute top-full left-0 mt-2 z-50">
+              <ModelSelector 
+                selectedModel={selectedModel} 
+                onModelChange={setSelectedModel}
+                purpose="chat"
+              />
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className="p-5 border rounded-xl max-w-xl w-full mt-3 bg-[#151515]">
         <div className="flex gap-2 ">

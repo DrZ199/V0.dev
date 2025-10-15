@@ -7,10 +7,11 @@ import { Id } from "@/convex/_generated/dataModel";
 import { MessageContext } from "@/providers/MessageContext";
 import { UserDetailContext } from "@/context/UserDetailContext";
 import Image  from "next/image";
-import {ArrowRight, Link, Loader2Icon} from "lucide-react";
+import {ArrowRight, Link, Loader2Icon, Settings} from "lucide-react";
 import {LOOKUP} from "@/data/Lookup";
 import Prompt from "@/data/Prompt";
 import axios from "axios";
+import ModelSelector from "@/components/ModelSelector";
 
 const ChatView = () => {
     const {id} = useParams();
@@ -18,16 +19,19 @@ const ChatView = () => {
     const messageContext = useContext(MessageContext);
     const userDetailContext = useContext(UserDetailContext);
 
+  if (!messageContext || !userDetailContext) {
+    throw new Error('MessageContext or UserDetailContext is not defined');
+  }
 
   const [userInput, setUserInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showModelSelector, setShowModelSelector] = useState(false);
+  const { messages, setMessages, selectedModel, setSelectedModel } = messageContext;
   const UpdateMessages= useMutation(api.workspace.UpdateMessages)
   const router = useRouter();
 
   // Get context values safely
   const userDetail = userDetailContext?.userDetail;
-  const messages = messageContext?.messages || [];
-  const setMessages = messageContext?.setMessages || (() => {});
 
   const GetWorkspaceData = async () => {
     try {
@@ -43,11 +47,12 @@ const ChatView = () => {
   const GetAiResponse= async ()=>{
     setLoading(true)
     const PROMPT= JSON.stringify(messages)+ " "+Prompt.CHAT_PROMPT
-    const result = await axios.post('/api/ai-chat',{
-       prompt:PROMPT
+    const result = await axios.post('/api/openrouter-chat',{
+       prompt:PROMPT,
+       modelId: selectedModel
     })
-    const aiResponse={role:'ai',content:result.data.result}
-    setMessages((prev: Array<{role: string, content: string}> )=>[...prev,aiResponse]);
+    const aiResponse={role:'ai',content:result.data.result,timestamp: Date.now()}
+    setMessages((prev: Array<{role: string, content: string, timestamp: number}> )=>[...prev,aiResponse]);
     // console.log("ai:",result.data.result)
     await UpdateMessages({
       message: [...messages,aiResponse],
@@ -57,7 +62,7 @@ const ChatView = () => {
   }
 
   const onGenerate=(input: string )=>{
-      setMessages((prev: Array<{role: string, content: string}> )=>[...prev,{role:'user',content:input}]);
+      setMessages((prev: Array<{role: string, content: string, timestamp: number}> )=>[...prev,{role:'user',content:input, timestamp: Date.now()}]);
       setUserInput('');
   }
 
@@ -90,9 +95,31 @@ const ChatView = () => {
 
   return (
     <div className='relative h-[76vh] flex flex-col'>
+      {/* Model Selector */}
+      <div className="flex justify-end mb-2">
+        <div className="relative">
+          <button
+            onClick={() => setShowModelSelector(!showModelSelector)}
+            className="flex items-center gap-2 px-3 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg text-sm transition-colors"
+          >
+            <Settings className="h-4 w-4" />
+            Model: {selectedModel.split('/')[1]}
+          </button>
+          {showModelSelector && (
+            <div className="absolute right-0 top-full mt-2 z-50">
+              <ModelSelector 
+                selectedModel={selectedModel} 
+                onModelChange={setSelectedModel}
+                purpose="chat"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className='flex-1 overflow-y-scroll no-scrollbar'>
 
-      {Array.isArray(messages) && messages?.map((msg: {role: string, content: string}, index: number) => {
+      {Array.isArray(messages) && messages?.map((msg: {role: string, content: string, timestamp: number}, index: number) => {
         return (
           <div key={index} className='bg-[#272727] p-3 rounded-lg m-2 flex gap-5 itmes-start '>
             {msg.role === 'user' && (
@@ -104,8 +131,17 @@ const ChatView = () => {
               className='rounded-full'
               />
             )}
-            <h2 className='mt-1' >{msg.content}</h2>
-            
+            <div className='flex-1'>
+              <div className='flex justify-between items-start'>
+                <h2 className='mt-1' >{msg.content}</h2>
+                <span className='text-xs text-gray-400 ml-2 whitespace-nowrap'>
+                  {new Date(msg.timestamp).toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </span>
+              </div>
+            </div>
           </div>
         );
       })}
