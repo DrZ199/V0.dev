@@ -1,7 +1,7 @@
 'use client';
 import { useConvex, useMutation } from "convex/react";
 import { useParams, useRouter } from "next/navigation";
-import React, {useContext, useEffect, useState} from "react";
+import React, {useContext, useEffect, useState, useCallback} from "react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { MessageContext } from "@/providers/MessageContext";
@@ -33,7 +33,7 @@ const ChatView = () => {
   // Get context values safely
   const userDetail = userDetailContext?.userDetail;
 
-  const GetWorkspaceData = async () => {
+  const GetWorkspaceData = useCallback(async () => {
     try {
       const result = await convex.query(api.workspace.GetUserWorkSpace, {
         workspaceId: id as Id<"workspaces">,
@@ -42,9 +42,9 @@ const ChatView = () => {
     } catch (error) {
       console.error("Error fetching workspace data:", error);
     }
-  };
+  }, [id, convex, setMessages]);
 
-  const GetAiResponse= async ()=>{
+  const GetAiResponse= useCallback(async ()=>{
     setLoading(true)
     const PROMPT= JSON.stringify(messages)+ " "+Prompt.CHAT_PROMPT
     const result = await axios.post('/api/openrouter-chat',{
@@ -59,7 +59,7 @@ const ChatView = () => {
       workspaceId:id as Id<"workspaces">
     })
     setLoading(false)
-  }
+  }, [messages, selectedModel, id, UpdateMessages, setMessages])
 
   const onGenerate=(input: string )=>{
       setMessages((prev: Array<{role: string, content: string, timestamp: number}> )=>[...prev,{role:'user',content:input, timestamp: Date.now()}]);
@@ -76,7 +76,7 @@ const ChatView = () => {
     if(id){
         GetWorkspaceData();
     }
-  }, [id]);
+  }, [id, GetWorkspaceData]);
 
   useEffect(()=>{
     if(messages.length > 0){

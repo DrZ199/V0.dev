@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { OPENROUTER_MODELS, DEFAULT_MODEL } from '@/configs/OpenRouterModels';
+import React, { useState } from 'react';
+import { OPENROUTER_MODELS } from '@/configs/OpenRouterModels';
 import { ChevronDown, Zap, Brain, Database } from 'lucide-react';
 
 interface ModelSelectorProps {
@@ -16,7 +16,7 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({
   purpose = 'chat' 
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [models, setModels] = useState(OPENROUTER_MODELS);
+  const models = OPENROUTER_MODELS;
 
   const selectedModelData = models.find(model => model.id === selectedModel);
 

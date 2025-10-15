@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { OPENROUTER_MODELS, DEFAULT_MODEL } from "@/configs/OpenRouterModels";
+import { OPENROUTER_MODELS } from "@/configs/OpenRouterModels";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {

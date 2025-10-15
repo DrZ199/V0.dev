@@ -5,9 +5,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '@/convex/_generated/api';
 import { Id } from '@/convex/_generated/dataModel';
 import { UserDetailContext } from '@/context/UserDetailContext';
-import { useRouter } from 'next/navigation';
 import { Trash2, Code, MessageSquare, Plus, Calendar } from 'lucide-react';
-import { LOOKUP } from '@/data/Lookup';
 import Link from 'next/link';
 
 interface Workspace {
@@ -15,7 +13,7 @@ interface Workspace {
   _creationTime: number;
   user: Id<'users'>;
   message: Array<{ role: string; content: string; timestamp: number }>;
-  fileData?: any;
+  fileData?: Record<string, { code: string }>;
   title?: string;
   createdAt: number;
   updatedAt: number;
@@ -23,7 +21,6 @@ interface Workspace {
 
 const Dashboard = () => {
   const userDetailContext = useContext(UserDetailContext);
-  const router = useRouter();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -60,16 +57,6 @@ const Dashboard = () => {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
-    });
-  };
-
-  const formatDateTime = (timestamp: number) => {
-    return new Date(timestamp).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     });
   };
 
